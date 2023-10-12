@@ -6,14 +6,16 @@ func SingleXor(hexString string, char byte) string {
 	data, err := hex.DecodeString(hexString)
 	secret := byte(char)
 
+	result := ""
+
 	if err != nil {
 		panic("Error decoding hex string")
 	}
 
-	for idx, val := range data {
-		data[idx] = val ^ secret
+	for _, val := range data {
+		result += string(val ^ secret)
 	}
 
-	return hex.EncodeToString(data)
+	return result
 
 }
