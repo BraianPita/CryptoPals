@@ -3,6 +3,7 @@ package basics
 import (
 	"encoding/csv"
 	"encoding/hex"
+	"math"
 	"os"
 	"sort"
 	"strconv"
@@ -10,7 +11,7 @@ import (
 	"unicode/utf8"
 )
 
-func calculateEnglishScore(message string) float64 {
+func CalculateEnglishScore(message string) float64 {
 	letterFreq := readFrequencyTable()
 
 	freq := make(map[rune]float64)
@@ -102,6 +103,21 @@ func RankByLetterFreq(wordFrequencies map[string]float64) string {
 	// for _, v := range pl {
 	// 	fmt.Println(v.Key, v.Value)
 	// }
+}
+
+func XorCypherBestGuess(encondedMessage string) string {
+	decodedStrings := make(map[string]float64)
+
+	for x := 0; x < int(math.Pow(2, 8)); x++ {
+		message := SingleXor(encondedMessage, byte(x))
+
+		// fmt.Println(message)
+
+		decodedStrings[message] = CalculateEnglishScore(message)
+
+	}
+
+	return RankByLetterFreq(decodedStrings)
 }
 
 func SingleXor(hexString string, char byte) string {
