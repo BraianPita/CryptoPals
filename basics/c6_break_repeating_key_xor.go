@@ -1,5 +1,10 @@
 package basics
 
+import (
+	"fmt"
+	"sort"
+)
+
 // ---------------------------------- START HAMMING DISTANCE -----------------------------------
 
 var count8bits = [256]uint8{
@@ -48,18 +53,41 @@ func HammingDistance(m1 string, m2 string) int {
 	return dist
 }
 
-// ---------------------------------- END HAMMING DISTANCE -----------------------------------
+// --------------------- END HAMMING DISTANCE - START Base64 Decoder -----------------------
+
+func DecodeBase64(base string) []byte {
+	data := make([]byte, 0)
+
+	// TODO: Base64 decoder code
+
+	return data
+}
 
 // ---------------------------------- START FIND KEYSIZE -----------------------------------
 
 const MAX_KEY_SIZE = 50
 
-func findKeySizeWeights(data []byte) map[int]float32 {
-	keySizeArray := make(map[int]float32, MAX_KEY_SIZE)
+type KeysizeWeight struct {
+	Key   int
+	Value float32
+}
 
-	for i := 2; i <= MAX_KEY_SIZE; i++ {
-		keySizeArray[i] = normalizedKeySizeCalculation(i, data)
+type KeysizeWeightList []KeysizeWeight
+
+func (p KeysizeWeightList) Len() int           { return len(p) }
+func (p KeysizeWeightList) Less(i, j int) bool { return p[i].Value < p[j].Value }
+func (p KeysizeWeightList) More(i, j int) bool { return p[i].Value > p[j].Value }
+func (p KeysizeWeightList) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
+
+func calculateKeySizeWeights(data []byte) KeysizeWeightList {
+	keySizeArray := make(KeysizeWeightList, MAX_KEY_SIZE-2)
+
+	for i := 0; i < MAX_KEY_SIZE-2; i++ {
+		// +2 to start at keysize 2 (1 and 0 are not options)
+		keySizeArray[i] = KeysizeWeight{i + 2, normalizedKeySizeCalculation(i+2, data)}
 	}
+
+	sort.Sort(keySizeArray)
 
 	return keySizeArray
 
@@ -71,12 +99,44 @@ func normalizedKeySizeCalculation(keysize int, data []byte) float32 {
 		return 999.9
 	}
 
-	// TODO: Calculate normalized keysize value
 	// take the first KEYSIZE worth of bytes, and the second KEYSIZE worth of bytes,
 	// and find the edit distance between them. Normalize this result by dividing by KEYSIZE.
-	return 0.0
+	slice1 := data[0:keysize]
+	slice2 := data[keysize : keysize*2]
+
+	dist := HammingDistance(string(slice1), string(slice2))
+
+	return float32(dist) / float32(keysize)
+}
+
+func chunkSlice(slice []byte, chunkSize int) [][]byte {
+	var chunks [][]byte
+	for {
+		if len(slice) == 0 {
+			break
+		}
+
+		// necessary check to avoid slicing beyond
+		// slice capacity
+		if len(slice) < chunkSize {
+			chunkSize = len(slice)
+		}
+
+		chunks = append(chunks, slice[0:chunkSize])
+		slice = slice[chunkSize:]
+	}
+
+	return chunks
 }
 
 func BreakRepeatingKeyXor(data []byte) {
+
+	weights := calculateKeySizeWeights(data)
+
+	for _, keysize := range weights {
+		fmt.Printf("Trying keysize %v - %v\n", keysize.Key, keysize.Value)
+
+	}
 	// TODO: Write code to break repeating key xor
+
 }
