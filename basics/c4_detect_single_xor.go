@@ -23,7 +23,7 @@ func ReadLines(path string) ([]string, error) {
 
 // Similar to XorCypherBestGuess but for already decoded strings
 func rankStringList(input []string) string {
-	letterFreqList := make(map[string]float64)
+	letterFreqList := make(map[string]float32)
 
 	for _, message := range input {
 		letterFreqList[message] = CalculateEnglishScore(message)
@@ -39,7 +39,7 @@ func DecodeHexLetterFrequencyGuess(input []string) string {
 	bestList := make([]string, len(input))
 
 	for i, message := range input {
-		bestList[i] = XorCypherBestGuess(message)
+		bestList[i] = XorCypherBestGuessHex(message)
 	}
 
 	return rankStringList(bestList)

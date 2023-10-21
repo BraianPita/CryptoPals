@@ -129,12 +129,54 @@ func chunkSlice(slice []byte, chunkSize int) [][]byte {
 	return chunks
 }
 
+// transpose the matrix and return it in order as a single slice
+// It will ignore any missing elements on the last chunk after transposing
+func transposeChunks(chunks [][]byte) [][]byte {
+	// for transposing
+	lastChunkIndex := len(chunks) - 1
+	lastSize := len(chunks[lastChunkIndex])
+
+	// make an array (slice) for data in transposed order
+	transposedData := make([][]byte, 0)
+
+	// Iterate each item in block size (keysize len)
+	for i := 0; i < len(chunks[0]); i++ {
+
+		// for each keysize byte, add a block
+		transposedData = append(transposedData, make([]byte, 0))
+
+		// Iterate each block and get that item
+		// except last block, which can be incomplete
+		for chunkIndex := 0; chunkIndex < len(chunks)-1; chunkIndex++ {
+			// Returns the data at the current transposed location
+			transposedData[i] = append(transposedData[i], chunks[chunkIndex][i])
+		}
+		// after iteration, check if current element exists on last block
+		if i < lastSize {
+			transposedData[i] = append(transposedData[i], chunks[lastChunkIndex][i])
+		}
+	}
+
+	return transposedData
+}
+
 func BreakRepeatingKeyXor(data []byte) {
 
+	// get all weights for normalized keysize calculations
 	weights := calculateKeySizeWeights(data)
 
+	// Iterate each keysize from most likely to less likely
 	for _, keysize := range weights {
 		fmt.Printf("Trying keysize %v - %v\n", keysize.Key, keysize.Value)
+
+		// Separate data into chunks of size 'keysize'
+		chunks := chunkSlice(data, keysize.Key)
+
+		// get transposed data
+		transposedData := transposeChunks(chunks)
+		fmt.Printf("%v", transposedData)
+
+		break
 
 	}
 	// TODO: Write code to break repeating key xor

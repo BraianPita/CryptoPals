@@ -11,12 +11,12 @@ import (
 	"unicode/utf8"
 )
 
-func CalculateEnglishScore(message string) float64 {
+func CalculateEnglishScore(message string) float32 {
 	letterFreq := readFrequencyTable()
 
-	freq := make(map[rune]float64)
+	freq := make(map[rune]float32)
 
-	total := float64(0)
+	total := float32(0)
 
 	message = strings.ToLower(message)
 
@@ -32,9 +32,9 @@ func CalculateEnglishScore(message string) float64 {
 	for r, val := range freq {
 		if freq, exists := letterFreq[r]; !exists {
 			if string(r) != " " {
-				total -= float64(val / float64(len(message)))
+				total -= float32(val / float32(len(message)))
 			} else {
-				total -= freq - (val / float64(len(message)))
+				total -= freq - (val / float32(len(message)))
 			}
 		}
 	}
@@ -43,7 +43,7 @@ func CalculateEnglishScore(message string) float64 {
 
 }
 
-func readFrequencyTable() map[rune]float64 {
+func readFrequencyTable() map[rune]float32 {
 	// open file
 	f, err := os.Open("data/english_letter_freq.csv")
 	if err != nil {
@@ -60,7 +60,7 @@ func readFrequencyTable() map[rune]float64 {
 		panic(err)
 	}
 
-	freqMap := make(map[rune]float64)
+	freqMap := make(map[rune]float32)
 	// convert records to array of structs
 	for i, line := range data {
 		if i > 0 { // omit header line
@@ -71,7 +71,7 @@ func readFrequencyTable() map[rune]float64 {
 				panic("Error parsing csv float Frequency.")
 			}
 
-			freqMap[r] = float64(freq)
+			freqMap[r] = float32(freq)
 		}
 	}
 
@@ -80,7 +80,7 @@ func readFrequencyTable() map[rune]float64 {
 
 type Pair struct {
 	Key   string
-	Value float64
+	Value float32
 }
 
 type PairList []Pair
@@ -89,7 +89,7 @@ func (p PairList) Len() int           { return len(p) }
 func (p PairList) Less(i, j int) bool { return p[i].Value < p[j].Value }
 func (p PairList) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
-func RankByLetterFreq(wordFrequencies map[string]float64) string {
+func RankByLetterFreq(wordFrequencies map[string]float32) string {
 	pl := make(PairList, len(wordFrequencies))
 	i := 0
 	for k, v := range wordFrequencies {
@@ -105,8 +105,18 @@ func RankByLetterFreq(wordFrequencies map[string]float64) string {
 	// }
 }
 
-func XorCypherBestGuess(encondedMessage string) string {
-	decodedStrings := make(map[string]float64)
+func XorCypherBestGuessHex(encondedHex string) string {
+	data, err := hex.DecodeString(encondedHex)
+
+	if err != nil {
+		panic("Error decoding hex string")
+	}
+
+	return XorCypherBestGuess(data)
+}
+
+func XorCypherBestGuess(encondedMessage []byte) string {
+	decodedStrings := make(map[string]float32)
 
 	for x := 0; x < int(math.Pow(2, 8)); x++ {
 		message := SingleXor(encondedMessage, byte(x))
@@ -120,15 +130,9 @@ func XorCypherBestGuess(encondedMessage string) string {
 	return RankByLetterFreq(decodedStrings)
 }
 
-func SingleXor(hexString string, char byte) string {
-	data, err := hex.DecodeString(hexString)
-	secret := byte(char)
+func SingleXor(data []byte, secret byte) string {
 
 	result := ""
-
-	if err != nil {
-		panic("Error decoding hex string")
-	}
 
 	for _, val := range data {
 		result += string(val ^ secret)
