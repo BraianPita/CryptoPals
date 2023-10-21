@@ -78,34 +78,30 @@ func readFrequencyTable() map[rune]float32 {
 	return freqMap
 }
 
-type Pair struct {
-	Key   string
-	Value float32
+type XorGuess struct {
+	Key     byte
+	Message string
+	Score   float32
 }
 
-type PairList []Pair
+type XorGuessList []XorGuess
 
-func (p PairList) Len() int           { return len(p) }
-func (p PairList) Less(i, j int) bool { return p[i].Value < p[j].Value }
-func (p PairList) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
+func (p XorGuessList) Len() int           { return len(p) }
+func (p XorGuessList) Less(i, j int) bool { return p[i].Score < p[j].Score }
+func (p XorGuessList) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
-func RankByLetterFreq(wordFrequencies map[string]float32) string {
-	pl := make(PairList, len(wordFrequencies))
-	i := 0
-	for k, v := range wordFrequencies {
-		pl[i] = Pair{k, v}
-		i++
-	}
-	sort.Sort(sort.Reverse(pl))
+func RankByLetterFreq(wordFrequencies XorGuessList) XorGuess {
 
-	return pl[0].Key
+	sort.Sort(sort.Reverse(wordFrequencies))
+
+	return wordFrequencies[0]
 
 	// for _, v := range pl {
 	// 	fmt.Println(v.Key, v.Value)
 	// }
 }
 
-func XorCypherBestGuessHex(encondedHex string) string {
+func XorCypherBestGuessHex(encondedHex string) XorGuess {
 	data, err := hex.DecodeString(encondedHex)
 
 	if err != nil {
@@ -115,15 +111,15 @@ func XorCypherBestGuessHex(encondedHex string) string {
 	return XorCypherBestGuess(data)
 }
 
-func XorCypherBestGuess(encondedMessage []byte) string {
-	decodedStrings := make(map[string]float32)
+func XorCypherBestGuess(encondedMessage []byte) XorGuess {
+	decodedStrings := make(XorGuessList, 0)
 
 	for x := 0; x < int(math.Pow(2, 8)); x++ {
 		message := SingleXor(encondedMessage, byte(x))
 
 		// fmt.Println(message)
 
-		decodedStrings[message] = CalculateEnglishScore(message)
+		decodedStrings = append(decodedStrings, XorGuess{byte(x), message, CalculateEnglishScore(message)})
 
 	}
 

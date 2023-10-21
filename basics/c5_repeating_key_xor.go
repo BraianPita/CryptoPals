@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 )
 
-func RepeatingKeyXor(key string, data string) string {
+func RepeatingKeyXorHex(key string, data string) string {
 	dataBytes := []byte(data)
 	keyBytes := []byte(key)
 
@@ -18,4 +18,21 @@ func RepeatingKeyXor(key string, data string) string {
 	}
 
 	return hex.EncodeToString(dataBytes)
+}
+
+// repeating key xor but on raw bytes
+func RepeatingKeyXor(key string, data []byte) []byte {
+	keyBytes := []byte(key)
+	dataBytes := make([]byte, len(data))
+
+	numKeyBytes := len(keyBytes)
+
+	index := 0
+
+	for idx, dataByte := range data {
+		dataBytes[idx] = dataByte ^ keyBytes[index]
+		index = (index + 1) % numKeyBytes
+	}
+
+	return dataBytes
 }

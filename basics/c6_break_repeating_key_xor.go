@@ -79,7 +79,7 @@ func (p KeysizeWeightList) Less(i, j int) bool { return p[i].Value < p[j].Value 
 func (p KeysizeWeightList) More(i, j int) bool { return p[i].Value > p[j].Value }
 func (p KeysizeWeightList) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
-func calculateKeySizeWeights(data []byte) KeysizeWeightList {
+func calculateKeySizeScores(data []byte) KeysizeWeightList {
 	keySizeArray := make(KeysizeWeightList, MAX_KEY_SIZE-2)
 
 	for i := 0; i < MAX_KEY_SIZE-2; i++ {
@@ -89,13 +89,18 @@ func calculateKeySizeWeights(data []byte) KeysizeWeightList {
 
 	sort.Sort(keySizeArray)
 
+	// // Print keysizes in order of score
+	// for i := 0; i < 5; i++ {
+	// 	fmt.Printf("%v - %v\n", keySizeArray[i].Key, keySizeArray[i].Value)
+	// }
+
 	return keySizeArray
 
 }
 
 func normalizedKeySizeCalculation(keysize int, data []byte) float32 {
 	// invalid inputs
-	if len(data) < keysize*2 {
+	if len(data) < keysize*4 {
 		return 999.9
 	}
 
@@ -103,10 +108,14 @@ func normalizedKeySizeCalculation(keysize int, data []byte) float32 {
 	// and find the edit distance between them. Normalize this result by dividing by KEYSIZE.
 	slice1 := data[0:keysize]
 	slice2 := data[keysize : keysize*2]
+	slice3 := data[keysize*2 : keysize*3]
+	slice4 := data[keysize*3 : keysize*4]
 
-	dist := HammingDistance(string(slice1), string(slice2))
+	dist := float32(HammingDistance(string(slice1), string(slice2))+
+		HammingDistance(string(slice2), string(slice3))+
+		HammingDistance(string(slice3), string(slice4))) / float32(keysize*3)
 
-	return float32(dist) / float32(keysize)
+	return dist
 }
 
 func chunkSlice(slice []byte, chunkSize int) [][]byte {
@@ -162,23 +171,33 @@ func transposeChunks(chunks [][]byte) [][]byte {
 
 func BreakRepeatingKeyXor(data []byte) {
 
-	// get all weights for normalized keysize calculations
-	weights := calculateKeySizeWeights(data)
+	// get all Scores for normalized keysize calculations
+	keysizes := calculateKeySizeScores(data)
 
 	// Iterate each keysize from most likely to less likely
-	for _, keysize := range weights {
-		fmt.Printf("Trying keysize %v - %v\n", keysize.Key, keysize.Value)
+	for keysizeRank, keysize := range keysizes {
+		fmt.Printf("\nTrying keysize %v - %v\n", keysize.Key, keysize.Value)
 
 		// Separate data into chunks of size 'keysize'
 		chunks := chunkSlice(data, keysize.Key)
 
 		// get transposed data
-		transposedData := transposeChunks(chunks)
-		fmt.Printf("%v", transposedData)
+		transposedChunks := transposeChunks(chunks)
 
-		break
+		guessedKey := ""
+		guessedMessage := ""
+		for _, chunk := range transposedChunks {
+			guess := XorCypherBestGuess(chunk)
+
+			guessedKey += string(guess.Key)
+		}
+
+		guessedMessage = string(RepeatingKeyXor(guessedKey, data))
+		fmt.Printf("KEY %v \nProduced: \n%v\n", guessedKey, guessedMessage)
+
+		if keysizeRank > 2 {
+			break
+		}
 
 	}
-	// TODO: Write code to break repeating key xor
-
 }
