@@ -1,7 +1,6 @@
 package basics
 
 import (
-	"encoding/base64"
 	"reflect"
 	"testing"
 )
@@ -29,20 +28,12 @@ func TestTransposeChunks(t *testing.T) {
 func TestBreakRepeatingKeyXor(t *testing.T) {
 
 	lines, err := ReadLines("data/c6_encrypted_data.txt")
-	data := make([]byte, 0)
 
 	if err != nil {
 		t.Fatalf("Error reading data from file: %v", err)
 	}
 
-	for _, line := range lines {
-		// fmt.Printf("%v", line)
-		curr, err := base64.StdEncoding.DecodeString(line)
-		if err != nil {
-			t.Fatalf("Error decoding base64 string: %v", err)
-		}
-		data = append(data, curr[:]...)
-	}
+	data := Base64ToBytes(lines)
 
 	BreakRepeatingKeyXor(data)
 }

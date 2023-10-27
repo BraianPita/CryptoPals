@@ -1,9 +1,27 @@
 package basics
 
 import (
+	"encoding/base64"
 	"fmt"
 	"sort"
 )
+
+func Base64ToBytes(input []string) []byte {
+	data := make([]byte, 0)
+
+	for _, line := range input {
+		// fmt.Printf("%v", line)
+		curr, err := base64.StdEncoding.DecodeString(line)
+
+		if err != nil {
+			panic(fmt.Sprintf("Error decoding base64 string: %v", err))
+		}
+
+		data = append(data, curr[:]...)
+	}
+
+	return data
+}
 
 // ---------------------------------- START HAMMING DISTANCE -----------------------------------
 
