@@ -73,12 +73,16 @@ func HammingDistance(m1 string, m2 string) int {
 
 // --------------------- END HAMMING DISTANCE - START Base64 Decoder -----------------------
 
-func DecodeBase64(base string) []byte {
-	data := make([]byte, 0)
+// func DecodeBase64(base string) []byte {
+// 	data := make([]byte, 0)
 
-	// TODO: Base64 decoder code
+// 	// TODO: Base64 decoder code
 
-	return data
+// 	return data
+// }
+
+func EncodeBase64(data []byte) string {
+	return base64.StdEncoding.EncodeToString(data)
 }
 
 // ---------------------------------- START FIND KEYSIZE -----------------------------------
